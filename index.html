@@ -221,7 +221,14 @@ async function tinyCall(endpoint, payload) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ endpoint, payload: { token, ...payload } })
   });
-  return r.json();
+
+  const text = await r.text();
+
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    throw new Error(text);
+  }
 }
 
 // ─── LOAD REAL PRODUCTS FROM TINY ────────────────────────
