@@ -150,11 +150,6 @@
       margin-bottom: 6px;
       text-transform: uppercase;
     }
-    .category {
-      font-size: 12px;
-      color: #777;
-      margin-bottom: 12px;
-    }
     .price {
       font-size: 18px;
       font-weight: 700;
@@ -253,7 +248,7 @@
       <button id="loginBtn" class="btn-primary">Acessar catálogo →</button>
 
       <div class="helper">
-        <strong>Como obter seu token Tiny:</strong> Acesse o Tiny ERP → Configurações → Token de acesso à API. Cole o token acima para sincronizar produtos e enviar pedidos automaticamente.
+        <strong>Como obter seu token Tiny:</strong> Acesse o Tiny ERP → Configurações → Token de acesso à API.
       </div>
 
       <div id="loginError" class="error"></div>
@@ -291,15 +286,16 @@
   <script>
     const PROXY = '/api/tiny';
 
-    const ALLOWED_CATEGORIES = [
-      'Colorido',
-      'Dadinho do Chef',
-      'Dadinho NUU',
-      'Dadinho Vegano',
-      'Goma de Tapioca',
-      'Palitinho de Tapioca',
-      'Pão de Queijo',
-      'Pizza'
+    const KEYWORDS = [
+      'nuu',
+      'dadinho',
+      'pao de queijo',
+      'pão de queijo',
+      'pizza',
+      'goma',
+      'tapioca',
+      'palitinho',
+      'colorido'
     ];
 
     let token = '';
@@ -373,9 +369,21 @@
       }
     }
 
-    async function loadCategoryForProduct(id) {
-      const data = await tinyCall('produto.obter', { id });
-      return data?.retorno?.produto || null;
+    function detectCategory(name) {
+      const n = normalizeText(name);
+
+      if (n.includes('pizza')) return 'Pizza';
+      if (n.includes('dadinho do chef')) return 'Dadinho do Chef';
+      if (n.includes('dadinho vegano')) return 'Dadinho Vegano';
+      if (n.includes('dadinho')) return 'Dadinho NUU';
+      if (n.includes('palitinho')) return 'Palitinho de Tapioca';
+      if (n.includes('goma')) return 'Goma de Tapioca';
+      if (n.includes('pao de queijo') || n.includes('pão de queijo')) return 'Pão de Queijo';
+      if (n.includes('colorido')) return 'Colorido';
+      if (n.includes('tapioca')) return 'Palitinho de Tapioca';
+      if (n.includes('nuu')) return 'Produtos NUU';
+
+      return 'Outros';
     }
 
     async function loadProducts() {
@@ -391,36 +399,25 @@
 
       const rawList = searchData?.retorno?.produtos || [];
 
-      const detailed = await Promise.all(
-        rawList.map(async (item, i) => {
-          const base = item && item.produto ? item.produto : {};
-          const detail = await loadCategoryForProduct(base.id);
-
-          const categoria =
-            detail?.categoria ||
-            detail?.descricao_categoria ||
-            detail?.categoria_descricao ||
-            '';
-
+      products = rawList
+        .map((item, i) => {
+          const p = item && item.produto ? item.produto : {};
           return {
-            id: String(base.id || base.codigo || i + 1),
-            codigo: String(base.codigo || ''),
-            name: String(base.nome || 'Produto sem nome').trim(),
-            price: Number(base.preco || 0),
-            unit: String(base.unidade || 'UN').trim().toUpperCase(),
-            cat: String(categoria || '').trim(),
+            id: String(p.id || p.codigo || i + 1),
+            codigo: String(p.codigo || ''),
+            name: String(p.nome || 'Produto sem nome').trim(),
+            price: Number(p.preco || 0),
+            unit: String(p.unidade || 'UN').trim().toUpperCase(),
+            cat: detectCategory(p.nome || ''),
             stock: true,
             minQty: 1,
             image: '📦'
           };
         })
-      );
-
-      products = detailed.filter(p =>
-        ALLOWED_CATEGORIES.some(cat =>
-          normalizeText(cat) === normalizeText(p.cat)
-        )
-      );
+        .filter(p => {
+          const full = normalizeText((p.name || '') + ' ' + (p.codigo || ''));
+          return KEYWORDS.some(k => full.includes(normalizeText(k)));
+        });
 
       buildTabs();
       renderProducts();
@@ -473,7 +470,6 @@
             <div class="emoji">${p.image}</div>
             <div class="title">${escapeHtml(p.name)}</div>
             <div class="unit">${escapeHtml(p.unit)}</div>
-            <div class="category">${escapeHtml(p.cat || '')}</div>
             <div class="price">${brl(p.price)}</div>
             <div class="minqty">mín. ${p.minQty} unidade</div>
             <div class="stock ok">✓ Disponível</div>
