@@ -1,7 +1,11 @@
-const searchData = await tinyCall('produto.obter', {
-  id: '828587454'
-});
-console.log('PRODUTO DETALHE:', searchData);
-products = [];
-renderProducts();
-return;
+fetch('/api/tiny', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    endpoint: 'produto.obter',
+    payload: {
+      token: document.getElementById('token')?.value || localStorage.getItem('nuu_portal_session') ? JSON.parse(localStorage.getItem('nuu_portal_session') || '{}').token : '',
+      id: '828587454'
+    }
+  })
+}).then(r => r.json()).then(console.log)
