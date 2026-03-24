@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NUU Alimentos — Portal de Pedidos</title>
+<style>
+  :root {
+    --green: #3B6D11; --green-light: #EAF3DE; --green-dark: #27500A;
+    --text: #1a1a18; --text2: #6b6b67; --text3: #9a9a96;
+    --bg: #f8f7f4; --bg2: #ffffff; --bg3: #f2f1ed;
+    --border: rgba(0,0,0,0.10); --border2: rgba(0,0,0,0.18);
+    --warn-bg: #FAEEDA; --warn-text: #854F0B;
+    --success-bg: #EAF3DE; --success-text: #3B6D11;
+    --danger-bg: #FCEBEB; --danger-text: #A32D2D;
+    --radius: 10px; --radius-sm: 6px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, 'Helvetica Neue', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
+
+  /* HEADER */
+  .hdr { display: flex; align-items: center; justify-content: space-between; padding: 12px 24px; background: var(--bg2); border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 8px; }
+  .logo { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; }
+  .logo span { color: var(--green); }
+  .hdr-right { display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--text2); }
+  .logout-btn { padding: 5px 12px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: transparent; cursor: pointer; font-size: 12px; color: var(--text2); }
+  .logout-btn:hover { background: var(--bg3); }
+
+  /* TABS */
+  .tabs { display: flex; gap: 4px; padding: 10px 24px; background: var(--bg2); border-bottom: 1px solid var(--border); overflow-x: auto; flex-wrap: nowrap; }
+  .tab { white-space: nowrap; padding: 5px 14px; font-size: 12px; border-radius: var(--radius-sm); cursor: pointer; border: 1px solid transparent; background: transparent; color: var(--text2); }
+  .tab.on { background: var(--bg2); border-color: var(--border2); color: var(--text); font-weight: 500; }
+
+  /* LAYOUT */
+  .layout { display: grid; grid-template-columns: 1fr 290px; min-height: calc(100vh - 95px); }
+  @media(max-width:700px){ .layout{grid-template-columns:1fr} .cart-panel{position:fixed;bottom:0;left:0;right:0;max-height:50vh;overflow-y:auto;z-index:10;border-top:1px solid var(--border2)} }
+
+  /* PRODUCTS */
+  .pgrid { padding: 16px 24px; display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; align-content: start; }
+  .pcard { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; transition: border-color 0.15s; }
+  .pcard:hover { border-color: var(--border2); }
+  .picn { font-size: 26px; display: block; margin-bottom: 8px; line-height: 1; }
+  .pname { font-size: 12px; font-weight: 600; line-height: 1.3; margin-bottom: 2px; }
+  .punit { font-size: 11px; color: var(--text2); margin-bottom: 6px; }
+  .pprice { font-size: 15px; font-weight: 700; color: var(--green); }
+  .pmin { font-size: 10px; color: var(--text3); margin-top: 2px; }
+  .pstock-ok { font-size: 10px; color: var(--green); }
+  .pstock-low { font-size: 10px; color: var(--warn-text); }
+  .add-btn { width: 100%; margin-top: 10px; padding: 6px; font-size: 11px; font-weight: 500; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: transparent; cursor: pointer; color: var(--text); }
+  .add-btn:hover { background: var(--green-light); border-color: var(--green); color: var(--green); }
+  .qty-ctrl { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; }
+  .qbtn { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--border2); background: transparent; cursor: pointer; font-size: 14px; line-height: 26px; text-align: center; color: var(--text); }
+  .qbtn:hover { background: var(--bg3); }
+  .qnum { font-size: 14px; font-weight: 600; min-width: 22px; text-align: center; }
+
+  /* CART PANEL */
+  .cart-panel { background: var(--bg3); border-left: 1px solid var(--border); padding: 16px; overflow-y: auto; }
+  .cart-title { font-size: 10px; font-weight: 600; color: var(--text2); letter-spacing: 0.08em; margin-bottom: 14px; }
+  .cart-empty { font-size: 12px; color: var(--text3); text-align: center; padding: 40px 0; }
+  .cart-item { display: flex; justify-content: space-between; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12px; gap: 8px; }
+  .ci-name { flex: 1; line-height: 1.3; font-weight: 500; }
+  .ci-qty { font-size: 10px; color: var(--text2); }
+  .ci-sub { font-weight: 600; }
+  .cart-totals { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border2); }
+  .tot-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; color: var(--text2); }
+  .tot-big { font-size: 16px; font-weight: 700; color: var(--text); margin-top: 8px; display: flex; justify-content: space-between; }
+  .warn-bar { font-size: 11px; color: var(--warn-text); background: var(--warn-bg); border: 1px solid #F0C060; border-radius: var(--radius-sm); padding: 8px 11px; margin: 10px 0; line-height: 1.5; }
+  .order-btn { width: 100%; padding: 13px; font-size: 13px; font-weight: 600; background: var(--green); color: white; border: none; border-radius: var(--radius); cursor: pointer; margin-top: 10px; }
+  .order-btn:hover { background: var(--green-dark); }
+  .order-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+  /* SCREENS */
+  .screen { display: none; }
+  .screen.on { display: block; }
+
+  /* LOGIN */
+  .login-wrap { max-width: 400px; margin: 60px auto; padding: 0 20px; }
+  .login-logo { text-align: center; margin-bottom: 28px; }
+  .login-logo .logo { font-size: 24px; }
+  .login-logo p { font-size: 12px; color: var(--text2); margin-top: 4px; }
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; }
+  label { font-size: 11px; font-weight: 600; color: var(--text2); letter-spacing: 0.05em; display: block; margin-bottom: 4px; }
+  input[type=text], input[type=email], input[type=password] { width: 100%; padding: 9px 12px; border: 1px solid var(--border2); border-radius: var(--radius-sm); font-size: 13px; background: var(--bg2); color: var(--text); margin-bottom: 14px; }
+  input:focus { outline: none; border-color: var(--green); }
+  .primary-btn { width: 100%; padding: 11px; background: var(--green); color: white; border: none; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; }
+  .primary-btn:hover { background: var(--green-dark); }
+  .hint { font-size: 11px; color: var(--text3); text-align: center; margin-top: 10px; }
+  .note-box { margin-top: 12px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 11px; color: var(--text2); line-height: 1.5; }
+
+  /* CONFIRM */
+  .confirm-wrap { max-width: 600px; margin: 0 auto; padding: 20px 24px; }
+  .back-btn { font-size: 12px; color: var(--text2); background: transparent; border: none; cursor: pointer; margin-bottom: 16px; padding: 0; }
+  .section-title { font-size: 17px; font-weight: 700; margin-bottom: 4px; }
+  .section-sub { font-size: 12px; color: var(--text2); margin-bottom: 20px; }
+  .items-list { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .items-list .row { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; font-size: 12px; border-bottom: 1px solid var(--border); }
+  .items-list .row:last-child { border-bottom: none; }
+  .items-list .footer-row { background: var(--bg3); font-weight: 700; font-size: 14px; }
+  .payload-box { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin: 16px 0; }
+  .payload-label { font-size: 10px; font-weight: 600; color: var(--text2); letter-spacing: 0.06em; margin-bottom: 8px; }
+  pre { font-family: 'Menlo', 'Courier New', monospace; font-size: 10px; color: var(--text); white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; max-height: 260px; overflow-y: auto; }
+  .result-success { background: var(--success-bg); border: 1px solid var(--green); border-radius: var(--radius-sm); padding: 12px 16px; font-size: 12px; color: var(--success-text); line-height: 1.5; margin-top: 12px; }
+  .result-warn { background: var(--warn-bg); border: 1px solid #F0C060; border-radius: var(--radius-sm); padding: 12px 16px; font-size: 12px; color: var(--warn-text); line-height: 1.5; margin-top: 12px; }
+  .result-error { background: var(--danger-bg); border: 1px solid #E88; border-radius: var(--radius-sm); padding: 12px 16px; font-size: 12px; color: var(--danger-text); line-height: 1.5; margin-top: 12px; }
+
+  /* HISTORY */
+  .history-wrap { padding: 20px 24px; max-width: 800px; }
+  .order-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 18px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 600; }
+  .badge-ok { background: var(--success-bg); color: var(--success-text); }
+  .badge-pend { background: var(--warn-bg); color: var(--warn-text); }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="s-login" class="screen on">
+  <div class="login-wrap">
+    <div class="login-logo">
+      <div class="logo">NUU <span>ALIMENTOS</span></div>
+      <p>Portal de Pedidos B2B</p>
+    </div>
+    <div class="card">
+      <label>TOKEN TINY ERP</label>
+      <input type="password" id="inp-token" placeholder="Cole seu token aqui">
+      <label>CNPJ DA EMPRESA</label>
+      <input type="text" id="inp-cnpj" placeholder="00.000.000/0000-00">
+      <label>E-MAIL DO RESPONSÁVEL</label>
+      <input type="email" id="inp-email" placeholder="contato@empresa.com.br" style="margin-bottom:18px">
+      <button class="primary-btn" onclick="doLogin()">Acessar catálogo →</button>
+      <p class="hint">Novo cliente? Entre em contato pelo WhatsApp.</p>
+    </div>
+    <div class="note-box">
+      <strong>Como obter seu token TINY:</strong> Acesse o Tiny ERP → Configurações → Token de acesso à API. Cole o token acima para sincronizar produtos e enviar pedidos automaticamente.
+    </div>
+  </div>
+</div>
+
+<!-- CATALOG -->
+<div id="s-catalog" class="screen">
+  <div class="hdr">
+    <div class="logo">NUU <span>ALIMENTOS</span></div>
+    <div class="hdr-right">
+      <span id="lbl-client"></span>
+      <button class="logout-btn" onclick="doLogout()">Sair</button>
+    </div>
+  </div>
+  <div class="tabs" id="cat-tabs"></div>
+  <div class="layout">
+    <div id="pgrid" class="pgrid"></div>
+    <div class="cart-panel">
+      <div class="cart-title">PEDIDO ATUAL</div>
+      <div id="cart-items"></div>
+      <div id="cart-footer"></div>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM -->
+<div id="s-confirm" class="screen">
+  <div class="confirm-wrap">
+    <button class="back-btn" onclick="go('s-catalog')">← Voltar ao catálogo</button>
+    <div class="section-title">Revisar e confirmar pedido</div>
+    <div class="section-sub" id="conf-sub"></div>
+    <div class="items-list" id="conf-items"></div>
+    <div class="payload-box">
+      <div class="payload-label">PAYLOAD → TINY ERP (api2/pedido.incluir.php)</div>
+      <pre id="conf-payload"></pre>
+    </div>
+    <button id="send-btn" class="order-btn" onclick="sendOrder()">Enviar pedido para o TINY ERP</button>
+    <div id="order-result"></div>
+  </div>
+</div>
+
+<!-- HISTORY -->
+<div id="s-history" class="screen">
+  <div class="history-wrap">
+    <button class="back-btn" onclick="go('s-catalog')">← Voltar ao catálogo</button>
+    <div class="section-title" style="margin-bottom:16px">Histórico de pedidos</div>
+    <div id="history-list"></div>
+  </div>
+</div>
+
+<script>
+// ─── CONFIG ───────────────────────────────────────────────
+const MIN_ORDER = 300;
+const PROXY = '/api/tiny'; // Vercel serverless function
+
+// ─── DEMO PRODUCTS (replaced by real TINY data after login) ─
+const DEMO_PRODS = [
+  {id:'NUU-001',name:'Café Torrado e Moído',unit:'Pct 500g',price:18.90,stock:240,min:6,cat:'Café & Bebidas',ic:'☕'},
+  {id:'NUU-002',name:'Café em Grãos Premium',unit:'Pct 1kg',price:45.00,stock:120,min:3,cat:'Café & Bebidas',ic:'🫘'},
+  {id:'NUU-003',name:'Achocolatado em Pó',unit:'Lata 400g',price:12.50,stock:180,min:12,cat:'Café & Bebidas',ic:'🍫'},
+  {id:'NUU-004',name:'Leite em Pó Integral',unit:'Lata 400g',price:15.80,stock:96,min:6,cat:'Lácteos',ic:'🥛'},
+  {id:'NUU-005',name:'Granola Tradicional',unit:'Saco 1kg',price:28.00,stock:60,min:4,cat:'Grãos & Cereais',ic:'🌾'},
+  {id:'NUU-006',name:'Aveia em Flocos',unit:'Saco 500g',price:8.90,stock:200,min:12,cat:'Grãos & Cereais',ic:'🌾'},
+  {id:'NUU-007',name:'Mix de Castanhas',unit:'Saco 200g',price:22.00,stock:48,min:6,cat:'Snacks',ic:'🥜'},
+  {id:'NUU-008',name:'Barra de Cereal Mel',unit:'Cx 24un',price:48.00,stock:36,min:2,cat:'Snacks',ic:'🍬'},
+  {id:'NUU-009',name:'Pasta de Amendoim',unit:'Pote 500g',price:26.00,stock:72,min:4,cat:'Snacks',ic:'🥜'},
+  {id:'NUU-010',name:'Mel Puro Natural',unit:'Pote 500g',price:32.00,stock:30,min:3,cat:'Complementos',ic:'🍯'},
+  {id:'NUU-011',name:'Azeite Extra Virgem',unit:'Garrafa 500ml',price:38.50,stock:54,min:4,cat:'Complementos',ic:'🫒'},
+  {id:'NUU-012',name:'Macarrão Integral',unit:'Emb 500g',price:7.90,stock:300,min:12,cat:'Grãos & Cereais',ic:'🍝'},
+];
+
+// ─── STATE ────────────────────────────────────────────────
+let cart = {}, products = [...DEMO_PRODS];
+let activeCat = 'Todos', token = '', cnpj = '', email = '';
+
+const cats = () => ['Todos', ...new Set(products.map(p => p.cat))];
+const R = n => 'R$ ' + n.toFixed(2).replace('.', ',');
+const getItems = () => Object.entries(cart).map(([id, q]) => {
+  const p = products.find(x => x.id === id);
+  return { ...p, q, sub: p.price * q };
+});
+const getTotal = () => getItems().reduce((s, i) => s + i.sub, 0);
+
+// ─── TINY API CALL ────────────────────────────────────────
+async function tinyCall(endpoint, payload) {
+  const r = await fetch(PROXY, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ endpoint, payload: { token, ...payload } })
+  });
+  return r.json();
+}
+
+// ─── LOAD REAL PRODUCTS FROM TINY ────────────────────────
+async function loadProducts() {
+  try {
+    const data = await tinyCall('produtos.pesquisar', { situacao: 'A', pagina: 1 });
+    if (data?.retorno?.produtos?.length) {
+      products = data.retorno.produtos.map(p => ({
+        id: p.produto.codigo || p.produto.id,
+        name: p.produto.descricao,
+        unit: p.produto.unidade || 'UN',
+        price: parseFloat(p.produto.preco) || 0,
+        stock: parseInt(p.produto.saldo_fisico_total) || 99,
+        min: 1,
+        cat: p.produto.categoria || 'Produtos',
+        ic: '📦'
+      }));
+    }
+  } catch(e) {
+    console.log('Usando produtos demo. Erro TINY:', e.message);
+  }
+}
+
+// ─── SCREENS ─────────────────────────────────────────────
+function go(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+}
+
+// ─── LOGIN ────────────────────────────────────────────────
+async function doLogin() {
+  token = document.getElementById('inp-token').value.trim();
+  cnpj  = document.getElementById('inp-cnpj').value.trim();
+  email = document.getElementById('inp-email').value.trim();
+  if (!cnpj) { alert('Informe o CNPJ'); return; }
+  document.getElementById('lbl-client').textContent = cnpj;
+  if (token) await loadProducts();
+  renderTabs(); renderProds(); renderCart();
+  go('s-catalog');
+}
+
+function doLogout() {
+  token = cnpj = email = ''; cart = {}; products = [...DEMO_PRODS];
+  go('s-login');
+}
+
+// ─── CATALOG ─────────────────────────────────────────────
+function renderTabs() {
+  document.getElementById('cat-tabs').innerHTML = cats().map(c =>
+    `<button class="tab ${c === activeCat ? 'on' : ''}" onclick="setCat('${c}')">${c}</button>`
+  ).join('');
+}
+
+function setCat(c) { activeCat = c; renderTabs(); renderProds(); }
+
+function renderProds() {
+  const list = activeCat === 'Todos' ? products : products.filter(p => p.cat === activeCat);
+  document.getElementById('pgrid').innerHTML = list.map(p => {
+    const q = cart[p.id] || 0;
+    const low = p.stock < 50;
+    return `<div class="pcard">
+      <span class="picn">${p.ic}</span>
+      <div class="pname">${p.name}</div>
+      <div class="punit">${p.unit}</div>
+      <div class="pprice">${R(p.price)}</div>
+      <div class="pmin">mín. ${p.min} unidade${p.min > 1 ? 's' : ''}</div>
+      <div class="${low ? 'pstock-low' : 'pstock-ok'}">${low ? '⚠ Estoque baixo' : '✓ Disponível'}</div>
+      ${q === 0
+        ? `<button class="add-btn" onclick="addItem('${p.id}')">+ Adicionar</button>`
+        : `<div class="qty-ctrl">
+            <button class="qbtn" onclick="chgItem('${p.id}',-1)">−</button>
+            <span class="qnum">${q}</span>
+            <button class="qbtn" onclick="chgItem('${p.id}',1)">+</button>
+           </div>`}
+    </div>`;
+  }).join('');
+}
+
+function addItem(id) {
+  const p = products.find(x => x.id === id);
+  cart[id] = p.min;
+  renderProds(); renderCart();
+}
+
+function chgItem(id, d) {
+  const p = products.find(x => x.id === id);
+  const q = (cart[id] || 0) + d;
+  if (q < p.min) delete cart[id]; else cart[id] = q;
+  renderProds(); renderCart();
+}
+
+// ─── CART ─────────────────────────────────────────────────
+function renderCart() {
+  const items = getItems(), tot = getTotal(), ok = tot >= MIN_ORDER;
+  if (!items.length) {
+    document.getElementById('cart-items').innerHTML = `<div class="cart-empty">Nenhum item adicionado</div>`;
+    document.getElementById('cart-footer').innerHTML = '';
+    return;
+  }
+  document.getElementById('cart-items').innerHTML = items.map(i =>
+    `<div class="cart-item">
+      <div class="ci-name">${i.ic} ${i.name}<br><span class="ci-qty">${i.q}× ${R(i.price)}</span></div>
+      <div class="ci-sub">${R(i.sub)}</div>
+    </div>`
+  ).join('');
+  document.getElementById('cart-footer').innerHTML = `
+    ${!ok ? `<div class="warn-bar">Pedido mínimo ${R(MIN_ORDER)}. Faltam <strong>${R(MIN_ORDER - tot)}</strong>.</div>` : ''}
+    <div class="cart-totals">
+      <div class="tot-row"><span>Subtotal (${items.length} itens)</span><span>${R(tot)}</span></div>
+      <div class="tot-row"><span style="font-size:10px">Frete calculado na entrega</span></div>
+      <div class="tot-big"><span>Total</span><span>${R(tot)}</span></div>
+    </div>
+    <button class="order-btn" ${!ok ? 'disabled' : ''} onclick="goConfirm()">Revisar pedido →</button>`;
+}
+
+// ─── CONFIRM ──────────────────────────────────────────────
+function goConfirm() {
+  const items = getItems(), tot = getTotal();
+  document.getElementById('conf-sub').textContent = `Cliente: ${cnpj}  ·  ${email || 'sem e-mail informado'}`;
+  document.getElementById('conf-items').innerHTML =
+    items.map((i, idx) =>
+      `<div class="row">
+        <span>${i.ic} ${i.name} <span style="color:var(--text2)">${i.unit}</span></span>
+        <span>${i.q}× <strong>${R(i.sub)}</strong></span>
+      </div>`
+    ).join('') +
+    `<div class="row footer-row"><span>Total do pedido</span><span>${R(tot)}</span></div>`;
+
+  const payload = {
+    token: token || 'SEU_TOKEN',
+    formato: 'json',
+    pedido: {
+      data_pedido: new Date().toLocaleDateString('pt-BR'),
+      cliente: { nome: 'Cliente NUU', cnpj, email },
+      itens: items.map(i => ({
+        item: { codigo: i.id, descricao: i.name, unidade: 'UN', quantidade: i.q, valor_unitario: i.price }
+      })),
+      forma_pagamento: 'boleto',
+      observacoes: 'Pedido via Portal B2B NUU Alimentos'
+    }
+  };
+  document.getElementById('conf-payload').textContent = JSON.stringify(payload, null, 2);
+  document.getElementById('send-btn').disabled = false;
+  document.getElementById('send-btn').textContent = 'Enviar pedido para o TINY ERP';
+  document.getElementById('order-result').innerHTML = '';
+  go('s-confirm');
+}
+
+async function sendOrder() {
+  const btn = document.getElementById('send-btn');
+  btn.disabled = true; btn.textContent = 'Enviando...';
+  const items = getItems(), tot = getTotal();
+
+  if (!token) {
+    document.getElementById('order-result').innerHTML =
+      `<div class="result-warn">
+        <strong>Modo demo ativo</strong> — sem token TINY não é possível enviar o pedido ao ERP.<br>
+        Volte ao login, cole seu token TINY e tente novamente. O JSON acima mostra exatamente o que será enviado.
+      </div>`;
+    btn.disabled = false; btn.textContent = 'Enviar pedido para o TINY ERP';
+    return;
+  }
+
+  try {
+    const data = await tinyCall('pedido.incluir', {
+      pedido: {
+        data_pedido: new Date().toLocaleDateString('pt-BR'),
+        cliente: { cnpj, email },
+        itens: items.map(i => ({
+          item: { codigo: i.id, descricao: i.name, unidade: 'UN', quantidade: i.q, valor_unitario: i.price }
+        })),
+        forma_pagamento: 'boleto',
+        observacoes: 'Pedido via Portal B2B NUU Alimentos'
+      }
+    });
+    if (data?.retorno?.status === 'OK') {
+      const num = data.retorno.registros?.registro?.numero_pedido || '';
+      document.getElementById('order-result').innerHTML =
+        `<div class="result-success">
+          <strong>Pedido ${num} criado com sucesso no TINY ERP!</strong><br>
+          Estoque atualizado · Financeiro lançado · Pronto para emitir NF-e.
+        </div>`;
+      cart = {}; renderCart();
+    } else {
+      throw new Error(data?.retorno?.erros?.[0]?.erro || 'Erro desconhecido');
+    }
+  } catch(e) {
+    document.getElementById('order-result').innerHTML =
+      `<div class="result-error"><strong>Erro ao enviar:</strong> ${e.message}</div>`;
+    btn.disabled = false; btn.textContent = 'Tentar novamente';
+  }
+}
+</script>
+</body>
+</html>
