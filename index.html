@@ -234,7 +234,7 @@ async function tinyCall(endpoint, payload) {
 // ─── LOAD REAL PRODUCTS FROM TINY ────────────────────────
 async function loadProducts() {
   try {
-    const data = await tinyCall('produtos.pesquisa', { situacao: 'A', pagina: 1 });
+   const data = await tinyCall('produtos.pesquisa', { pesquisa: '', situacao: 'A', pagina: 1 });
     if (data?.retorno?.produtos?.length) {
       products = data.retorno.produtos.map(p => ({
         id: p.produto.codigo || p.produto.id,
