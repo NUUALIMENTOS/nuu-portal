@@ -13,38 +13,29 @@ module.exports = async function handler(req, res) {
   const { endpoint, payload } = body || {};
   if (!endpoint || !payload) return res.status(400).json({ error: 'Falta endpoint ou payload' });
 
-  const ALLOWED = ['produtos.pesquisar','produto.obter','pedido.incluir','pedidos.pesquisar','pedido.obter','contato.obter','contatos.pesquisar'];
-  if (!ALLOWED.includes(endpoint)) return res.status(400).json({ error: 'Endpoint nao permitido' });
+  const ALLOWED = [
+    'produtos.pesquisa','produto.obter','pedido.incluir',
+    'pedidos.pesquisa','pedido.obter','contato.obter','contatos.pesquisa'
+  ];
+  if (!ALLOWED.includes(endpoint)) return res.status(400).json({ error: 'Endpoint nao permitido: ' + endpoint });
 
   try {
     const form = new URLSearchParams();
     Object.entries(payload).forEach(([k, v]) => form.append(k, typeof v === 'object' ? JSON.stringify(v) : String(v)));
     form.append('formato', 'json');
 
-    // Tenta nova URL (Olist) primeiro, depois URL antiga (Tiny)
-    const urls = [
-      'https://api.tiny.com.br/api2/' + endpoint + '.php',
-      'https://erp.olist.com/api2/' + endpoint + '.php'
-    ];
+    const tinyRes = await fetch('https://api.tiny.com.br/api2/' + endpoint + '.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: form.toString()
+    });
 
-    let data, lastText;
-    for (const url of urls) {
-      const r = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: form.toString()
-      });
-      lastText = await r.text();
-      try {
-        data = JSON.parse(lastText);
-        break;
-      } catch(e) {
-        data = null;
-      }
+    const text = await tinyRes.text();
+    try {
+      return res.status(200).json(JSON.parse(text));
+    } catch(e) {
+      return res.status(502).json({ error: 'TINY retornou: ' + text });
     }
-
-    if (!data) return res.status(502).json({ error: 'TINY retornou: ' + lastText });
-    return res.status(200).json(data);
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
