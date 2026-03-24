@@ -37,6 +37,7 @@ module.exports = async function handler(req, res) {
       return res.status(502).json({ error: 'TINY retornou: ' + text });
     }
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    console.error('ERRO /api/tiny:', err);
+    return res.status(500).json({ error: String(err && err.message ? err.message : err) });
   }
 };
