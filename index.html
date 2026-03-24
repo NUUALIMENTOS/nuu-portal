@@ -6,12 +6,7 @@
   <title>NUU Alimentos — Portal de Pedidos B2B</title>
   <style>
     * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f7f6f2;
-      color: #222;
-    }
+    body { margin: 0; font-family: Arial, sans-serif; background: #f7f6f2; color: #222; }
     .hidden { display: none !important; }
 
     header {
@@ -22,10 +17,7 @@
       justify-content: space-between;
       align-items: center;
     }
-    .brand {
-      font-size: 20px;
-      font-weight: 700;
-    }
+    .brand { font-size: 20px; font-weight: 700; }
     .brand span { color: #4b8b1e; }
 
     .login-wrap {
@@ -44,16 +36,9 @@
       padding: 28px;
       box-shadow: 0 2px 8px rgba(0,0,0,.04);
     }
-    .login-card h1 {
-      margin: 0 0 6px;
-      font-size: 20px;
-      text-align: center;
-    }
-    .login-card p {
-      margin: 0 0 24px;
-      text-align: center;
-      color: #666;
-    }
+    .login-card h1 { margin: 0 0 6px; font-size: 20px; text-align: center; }
+    .login-card p { margin: 0 0 24px; text-align: center; color: #666; }
+
     label {
       display: block;
       font-size: 12px;
@@ -106,9 +91,7 @@
       white-space: pre-wrap;
     }
 
-    .app {
-      min-height: 100vh;
-    }
+    .app { min-height: 100vh; }
     .topbar-right {
       display: flex;
       gap: 12px;
@@ -121,6 +104,7 @@
       display: flex;
       gap: 10px;
       padding: 14px 24px 0;
+      flex-wrap: wrap;
     }
     .tab {
       background: #fff;
@@ -142,9 +126,7 @@
       padding: 12px 0 0;
       min-height: calc(100vh - 84px);
     }
-    .catalog {
-      padding: 18px 24px 24px;
-    }
+    .catalog { padding: 18px 24px 24px; }
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -160,20 +142,18 @@
       flex-direction: column;
       justify-content: space-between;
     }
-    .emoji {
-      font-size: 28px;
-      margin-bottom: 8px;
-    }
-    .title {
-      font-size: 14px;
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
+    .emoji { font-size: 28px; margin-bottom: 8px; }
+    .title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
     .unit {
       font-size: 13px;
       color: #666;
-      margin-bottom: 12px;
+      margin-bottom: 6px;
       text-transform: uppercase;
+    }
+    .category {
+      font-size: 12px;
+      color: #777;
+      margin-bottom: 12px;
     }
     .price {
       font-size: 18px;
@@ -186,18 +166,14 @@
       color: #666;
       margin-bottom: 4px;
     }
-    .stock.ok {
-      color: #3f7e12;
-    }
+    .stock.ok { color: #3f7e12; }
+
     .sidebar {
       background: #f3f1ec;
       border-left: 1px solid #ddd;
       padding: 20px;
     }
-    .sidebar h3 {
-      margin-top: 0;
-      font-size: 18px;
-    }
+    .sidebar h3 { margin-top: 0; font-size: 18px; }
     .cart-empty {
       color: #777;
       text-align: center;
@@ -251,9 +227,7 @@
       margin-bottom: 18px;
       flex-wrap: wrap;
     }
-    .toolbar input {
-      max-width: 260px;
-    }
+    .toolbar input { max-width: 260px; }
 
     @media (max-width: 1024px) {
       .layout { grid-template-columns: 1fr; }
@@ -295,10 +269,7 @@
       </div>
     </header>
 
-    <div class="tabs">
-      <button class="tab active" data-cat="Todos">Todos</button>
-      <button class="tab" data-cat="Produtos">Produtos</button>
-    </div>
+    <div id="tabs" class="tabs"></div>
 
     <div class="layout">
       <main class="catalog">
@@ -320,12 +291,23 @@
   <script>
     const PROXY = '/api/tiny';
 
+    const ALLOWED_CATEGORIES = [
+      'Colorido',
+      'Dadinho do Chef',
+      'Dadinho NUU',
+      'Dadinho Vegano',
+      'Goma de Tapioca',
+      'Palitinho de Tapioca',
+      'Pão de Queijo',
+      'Pizza'
+    ];
+
     let token = '';
     let cnpj = '';
     let email = '';
     let activeCat = 'Todos';
     let products = [];
-    let cart = {};
+    let cart = [];
 
     const loginView = document.getElementById('loginView');
     const appView = document.getElementById('appView');
@@ -336,6 +318,15 @@
     const cartEmpty = document.getElementById('cartEmpty');
     const cartList = document.getElementById('cartList');
     const cartTotal = document.getElementById('cartTotal');
+    const tabs = document.getElementById('tabs');
+
+    function normalizeText(value) {
+      return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim()
+        .toLowerCase();
+    }
 
     function brl(v) {
       return Number(v || 0).toLocaleString('pt-BR', {
@@ -382,46 +373,88 @@
       }
     }
 
-    function normalizeProducts(data) {
-      const rawList = data?.retorno?.produtos || [];
-
-      return rawList.map((item, i) => {
-        const p = item && item.produto ? item.produto : {};
-
-        return {
-          id: String(p.id || p.codigo || i + 1),
-          name: String((p.nome || 'Produto sem nome')).trim(),
-          price: Number(p.preco || 0),
-          unit: String(p.unidade || 'UN').trim().toUpperCase(),
-          cat: 'Produtos',
-          stock: true,
-          minQty: 1,
-          image: '📦'
-        };
-      });
+    async function loadCategoryForProduct(id) {
+      const data = await tinyCall('produto.obter', { id });
+      return data?.retorno?.produto || null;
     }
 
     async function loadProducts() {
-      const data = await tinyCall('produtos.pesquisa', {
+      const searchData = await tinyCall('produtos.pesquisa', {
         pesquisa: '',
         situacao: 'A',
         pagina: 1
       });
 
-      if (data?.erro) {
-        throw new Error(data.erro);
+      if (searchData?.erro) {
+        throw new Error(searchData.erro);
       }
 
-      products = normalizeProducts(data);
+      const rawList = searchData?.retorno?.produtos || [];
+
+      const detailed = await Promise.all(
+        rawList.map(async (item, i) => {
+          const base = item && item.produto ? item.produto : {};
+          const detail = await loadCategoryForProduct(base.id);
+
+          const categoria =
+            detail?.categoria ||
+            detail?.descricao_categoria ||
+            detail?.categoria_descricao ||
+            '';
+
+          return {
+            id: String(base.id || base.codigo || i + 1),
+            codigo: String(base.codigo || ''),
+            name: String(base.nome || 'Produto sem nome').trim(),
+            price: Number(base.preco || 0),
+            unit: String(base.unidade || 'UN').trim().toUpperCase(),
+            cat: String(categoria || '').trim(),
+            stock: true,
+            minQty: 1,
+            image: '📦'
+          };
+        })
+      );
+
+      products = detailed.filter(p =>
+        ALLOWED_CATEGORIES.some(cat =>
+          normalizeText(cat) === normalizeText(p.cat)
+        )
+      );
+
+      buildTabs();
       renderProducts();
     }
 
+    function buildTabs() {
+      const availableCategories = [...new Set(products.map(p => p.cat).filter(Boolean))];
+      const categories = ['Todos', ...availableCategories];
+
+      tabs.innerHTML = categories.map(cat => `
+        <button class="tab ${cat === activeCat ? 'active' : ''}" data-cat="${escapeHtml(cat)}">
+          ${escapeHtml(cat)}
+        </button>
+      `).join('');
+
+      document.querySelectorAll('.tab').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          activeCat = btn.dataset.cat || 'Todos';
+          renderProducts();
+        });
+      });
+    }
+
     function getFilteredProducts() {
-      const q = searchInput.value.trim().toLowerCase();
+      const q = normalizeText(searchInput.value);
 
       return products.filter(p => {
-        const catOk = activeCat === 'Todos' || p.cat === activeCat || activeCat === 'Produtos';
-        const searchOk = !q || p.name.toLowerCase().includes(q);
+        const catOk = activeCat === 'Todos' || p.cat === activeCat;
+        const searchOk =
+          !q ||
+          normalizeText(p.name).includes(q) ||
+          normalizeText(p.codigo).includes(q);
         return catOk && searchOk;
       });
     }
@@ -440,6 +473,7 @@
             <div class="emoji">${p.image}</div>
             <div class="title">${escapeHtml(p.name)}</div>
             <div class="unit">${escapeHtml(p.unit)}</div>
+            <div class="category">${escapeHtml(p.cat || '')}</div>
             <div class="price">${brl(p.price)}</div>
             <div class="minqty">mín. ${p.minQty} unidade</div>
             <div class="stock ok">✓ Disponível</div>
@@ -456,22 +490,31 @@
     function addToCart(id) {
       const p = getProductById(id);
       if (!p) return;
-      if (!cart[id]) cart[id] = 0;
-      cart[id] += 1;
+
+      const existing = cart.find(item => String(item.id) === String(id));
+      if (existing) {
+        existing.qty += 1;
+      } else {
+        cart.push({ id: p.id, qty: 1 });
+      }
+
       renderCart();
     }
 
     function changeQty(id, delta) {
-      if (!cart[id]) return;
-      cart[id] += delta;
-      if (cart[id] <= 0) delete cart[id];
+      const item = cart.find(x => String(x.id) === String(id));
+      if (!item) return;
+
+      item.qty += delta;
+      if (item.qty <= 0) {
+        cart = cart.filter(x => String(x.id) !== String(id));
+      }
+
       renderCart();
     }
 
     function renderCart() {
-      const ids = Object.keys(cart);
-
-      if (!ids.length) {
+      if (!cart.length) {
         cartEmpty.classList.remove('hidden');
         cartList.innerHTML = '';
         cartTotal.classList.add('hidden');
@@ -483,11 +526,11 @@
 
       let total = 0;
 
-      cartList.innerHTML = ids.map(id => {
-        const p = getProductById(id);
+      cartList.innerHTML = cart.map(item => {
+        const p = getProductById(item.id);
         if (!p) return '';
-        const qty = cart[id];
-        const sub = p.price * qty;
+
+        const sub = p.price * item.qty;
         total += sub;
 
         return `
@@ -495,9 +538,9 @@
             <div class="cart-item-title">${escapeHtml(p.name)}</div>
             <div>${brl(p.price)} · ${escapeHtml(p.unit)}</div>
             <div class="cart-controls">
-              <button class="small-btn" onclick="changeQty('${String(id).replace(/'/g, "\\'")}', -1)">−</button>
-              <div class="qty">${qty}</div>
-              <button class="small-btn" onclick="changeQty('${String(id).replace(/'/g, "\\'")}', 1)">+</button>
+              <button class="small-btn" onclick="changeQty('${String(item.id).replace(/'/g, "\\'")}', -1)">−</button>
+              <div class="qty">${item.qty}</div>
+              <button class="small-btn" onclick="changeQty('${String(item.id).replace(/'/g, "\\'")}', 1)">+</button>
             </div>
           </div>
         `;
@@ -545,7 +588,7 @@
       cnpj = '';
       email = '';
       products = [];
-      cart = {};
+      cart = [];
       document.getElementById('token').value = '';
       document.getElementById('cnpj').value = '';
       document.getElementById('email').value = '';
@@ -558,15 +601,6 @@
     document.getElementById('logoutBtn').addEventListener('click', logout);
     searchInput.addEventListener('input', renderProducts);
 
-    document.querySelectorAll('.tab').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        activeCat = btn.dataset.cat || 'Todos';
-        renderProducts();
-      });
-    });
-
     window.addToCart = addToCart;
     window.changeQty = changeQty;
 
@@ -575,6 +609,7 @@
       document.getElementById('cnpj').value = cnpj;
       document.getElementById('email').value = email;
       cnpjLabel.textContent = cnpj;
+
       loadProducts()
         .then(() => {
           loginView.classList.add('hidden');
