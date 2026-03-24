@@ -387,11 +387,13 @@
     }
 
     async function loadProducts() {
-      const searchData = await tinyCall('produtos.pesquisa', {
-        pesquisa: '',
-        situacao: 'A',
-        pagina: 1
-      });
+  const searchData = await tinyCall('produto.obter', {
+  id: '827562105'
+});
+console.log('PRODUTO DETALHE:', searchData);
+products = [];
+renderProducts();
+return;
 
       if (searchData?.erro) {
         throw new Error(searchData.erro);
