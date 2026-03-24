@@ -1,426 +1,589 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NUU Alimentos — Portal de Pedidos</title>
-<style>
-  :root {
-    --green: #3B6D11; --green-light: #EAF3DE; --green-dark: #27500A;
-    --text: #1a1a18; --text2: #6b6b67; --text3: #9a9a96;
-    --bg: #f8f7f4; --bg2: #ffffff; --bg3: #f2f1ed;
-    --border: rgba(0,0,0,0.10); --border2: rgba(0,0,0,0.18);
-    --warn-bg: #FAEEDA; --warn-text: #854F0B;
-    --success-bg: #EAF3DE; --success-text: #3B6D11;
-    --danger-bg: #FCEBEB; --danger-text: #A32D2D;
-    --radius: 10px; --radius-sm: 6px;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, 'Helvetica Neue', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5; }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NUU Alimentos — Portal de Pedidos B2B</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f7f6f2;
+      color: #222;
+    }
+    .hidden { display: none !important; }
 
-  /* HEADER */
-  .hdr { display: flex; align-items: center; justify-content: space-between; padding: 12px 24px; background: var(--bg2); border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 8px; }
-  .logo { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; }
-  .logo span { color: var(--green); }
-  .hdr-right { display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--text2); }
-  .logout-btn { padding: 5px 12px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: transparent; cursor: pointer; font-size: 12px; color: var(--text2); }
-  .logout-btn:hover { background: var(--bg3); }
+    header {
+      background: #fff;
+      border-bottom: 1px solid #ddd;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .brand {
+      font-size: 20px;
+      font-weight: 700;
+    }
+    .brand span { color: #4b8b1e; }
 
-  /* TABS */
-  .tabs { display: flex; gap: 4px; padding: 10px 24px; background: var(--bg2); border-bottom: 1px solid var(--border); overflow-x: auto; flex-wrap: nowrap; }
-  .tab { white-space: nowrap; padding: 5px 14px; font-size: 12px; border-radius: var(--radius-sm); cursor: pointer; border: 1px solid transparent; background: transparent; color: var(--text2); }
-  .tab.on { background: var(--bg2); border-color: var(--border2); color: var(--text); font-weight: 500; }
+    .login-wrap {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+    }
+    .login-card {
+      width: 100%;
+      max-width: 420px;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 16px;
+      padding: 28px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.04);
+    }
+    .login-card h1 {
+      margin: 0 0 6px;
+      font-size: 20px;
+      text-align: center;
+    }
+    .login-card p {
+      margin: 0 0 24px;
+      text-align: center;
+      color: #666;
+    }
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      margin: 14px 0 6px;
+      color: #555;
+      text-transform: uppercase;
+    }
+    input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      font-size: 14px;
+      outline: none;
+      background: #fff;
+    }
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .btn-primary {
+      width: 100%;
+      margin-top: 18px;
+      background: #3f7e12;
+      color: #fff;
+    }
+    .btn-outline {
+      background: #fff;
+      border: 1px solid #ccc;
+    }
+    .helper {
+      margin-top: 16px;
+      font-size: 12px;
+      color: #666;
+      line-height: 1.5;
+      background: #fafafa;
+      border: 1px solid #e7e7e7;
+      border-radius: 12px;
+      padding: 14px;
+    }
+    .error {
+      margin-top: 14px;
+      font-size: 13px;
+      color: #b00020;
+      white-space: pre-wrap;
+    }
 
-  /* LAYOUT */
-  .layout { display: grid; grid-template-columns: 1fr 290px; min-height: calc(100vh - 95px); }
-  @media(max-width:700px){ .layout{grid-template-columns:1fr} .cart-panel{position:fixed;bottom:0;left:0;right:0;max-height:50vh;overflow-y:auto;z-index:10;border-top:1px solid var(--border2)} }
+    .app {
+      min-height: 100vh;
+    }
+    .topbar-right {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      font-size: 14px;
+      color: #666;
+    }
 
-  /* PRODUCTS */
-  .pgrid { padding: 16px 24px; display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; align-content: start; }
-  .pcard { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; transition: border-color 0.15s; }
-  .pcard:hover { border-color: var(--border2); }
-  .picn { font-size: 26px; display: block; margin-bottom: 8px; line-height: 1; }
-  .pname { font-size: 12px; font-weight: 600; line-height: 1.3; margin-bottom: 2px; }
-  .punit { font-size: 11px; color: var(--text2); margin-bottom: 6px; }
-  .pprice { font-size: 15px; font-weight: 700; color: var(--green); }
-  .pmin { font-size: 10px; color: var(--text3); margin-top: 2px; }
-  .pstock-ok { font-size: 10px; color: var(--green); }
-  .pstock-low { font-size: 10px; color: var(--warn-text); }
-  .add-btn { width: 100%; margin-top: 10px; padding: 6px; font-size: 11px; font-weight: 500; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: transparent; cursor: pointer; color: var(--text); }
-  .add-btn:hover { background: var(--green-light); border-color: var(--green); color: var(--green); }
-  .qty-ctrl { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; }
-  .qbtn { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--border2); background: transparent; cursor: pointer; font-size: 14px; line-height: 26px; text-align: center; color: var(--text); }
-  .qbtn:hover { background: var(--bg3); }
-  .qnum { font-size: 14px; font-weight: 600; min-width: 22px; text-align: center; }
+    .tabs {
+      display: flex;
+      gap: 10px;
+      padding: 14px 24px 0;
+    }
+    .tab {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 999px;
+      padding: 10px 16px;
+      font-size: 14px;
+    }
+    .tab.active {
+      border-color: #3f7e12;
+      color: #3f7e12;
+      font-weight: 700;
+    }
 
-  /* CART PANEL */
-  .cart-panel { background: var(--bg3); border-left: 1px solid var(--border); padding: 16px; overflow-y: auto; }
-  .cart-title { font-size: 10px; font-weight: 600; color: var(--text2); letter-spacing: 0.08em; margin-bottom: 14px; }
-  .cart-empty { font-size: 12px; color: var(--text3); text-align: center; padding: 40px 0; }
-  .cart-item { display: flex; justify-content: space-between; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12px; gap: 8px; }
-  .ci-name { flex: 1; line-height: 1.3; font-weight: 500; }
-  .ci-qty { font-size: 10px; color: var(--text2); }
-  .ci-sub { font-weight: 600; }
-  .cart-totals { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border2); }
-  .tot-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; color: var(--text2); }
-  .tot-big { font-size: 16px; font-weight: 700; color: var(--text); margin-top: 8px; display: flex; justify-content: space-between; }
-  .warn-bar { font-size: 11px; color: var(--warn-text); background: var(--warn-bg); border: 1px solid #F0C060; border-radius: var(--radius-sm); padding: 8px 11px; margin: 10px 0; line-height: 1.5; }
-  .order-btn { width: 100%; padding: 13px; font-size: 13px; font-weight: 600; background: var(--green); color: white; border: none; border-radius: var(--radius); cursor: pointer; margin-top: 10px; }
-  .order-btn:hover { background: var(--green-dark); }
-  .order-btn:disabled { background: #ccc; cursor: not-allowed; }
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 0;
+      padding: 12px 0 0;
+      min-height: calc(100vh - 84px);
+    }
+    .catalog {
+      padding: 18px 24px 24px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 16px;
+      padding: 16px;
+      min-height: 220px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .emoji {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+    .title {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .unit {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+    }
+    .price {
+      font-size: 18px;
+      font-weight: 700;
+      color: #3f7e12;
+      margin-bottom: 6px;
+    }
+    .minqty, .stock {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 4px;
+    }
+    .stock.ok {
+      color: #3f7e12;
+    }
+    .sidebar {
+      background: #f3f1ec;
+      border-left: 1px solid #ddd;
+      padding: 20px;
+    }
+    .sidebar h3 {
+      margin-top: 0;
+      font-size: 18px;
+    }
+    .cart-empty {
+      color: #777;
+      text-align: center;
+      padding: 40px 10px;
+    }
+    .cart-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .cart-item {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      padding: 12px;
+    }
+    .cart-item-title {
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .cart-controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 8px;
+    }
+    .small-btn {
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      background: #fff;
+    }
+    .qty {
+      min-width: 28px;
+      text-align: center;
+      font-weight: 700;
+    }
+    .cart-total {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #ddd;
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .toolbar {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+    .toolbar input {
+      max-width: 260px;
+    }
 
-  /* SCREENS */
-  .screen { display: none; }
-  .screen.on { display: block; }
-
-  /* LOGIN */
-  .login-wrap { max-width: 400px; margin: 60px auto; padding: 0 20px; }
-  .login-logo { text-align: center; margin-bottom: 28px; }
-  .login-logo .logo { font-size: 24px; }
-  .login-logo p { font-size: 12px; color: var(--text2); margin-top: 4px; }
-  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; }
-  label { font-size: 11px; font-weight: 600; color: var(--text2); letter-spacing: 0.05em; display: block; margin-bottom: 4px; }
-  input[type=text], input[type=email], input[type=password] { width: 100%; padding: 9px 12px; border: 1px solid var(--border2); border-radius: var(--radius-sm); font-size: 13px; background: var(--bg2); color: var(--text); margin-bottom: 14px; }
-  input:focus { outline: none; border-color: var(--green); }
-  .primary-btn { width: 100%; padding: 11px; background: var(--green); color: white; border: none; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; }
-  .primary-btn:hover { background: var(--green-dark); }
-  .hint { font-size: 11px; color: var(--text3); text-align: center; margin-top: 10px; }
-  .note-box { margin-top: 12px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 11px; color: var(--text2); line-height: 1.5; }
-
-  /* CONFIRM */
-  .confirm-wrap { max-width: 600px; margin: 0 auto; padding: 20px 24px; }
-  .back-btn { font-size: 12px; color: var(--text2); background: transparent; border: none; cursor: pointer; margin-bottom: 16px; padding: 0; }
-  .section-title { font-size: 17px; font-weight: 700; margin-bottom: 4px; }
-  .section-sub { font-size: 12px; color: var(--text2); margin-bottom: 20px; }
-  .items-list { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-  .items-list .row { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; font-size: 12px; border-bottom: 1px solid var(--border); }
-  .items-list .row:last-child { border-bottom: none; }
-  .items-list .footer-row { background: var(--bg3); font-weight: 700; font-size: 14px; }
-  .payload-box { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin: 16px 0; }
-  .payload-label { font-size: 10px; font-weight: 600; color: var(--text2); letter-spacing: 0.06em; margin-bottom: 8px; }
-  pre { font-family: 'Menlo', 'Courier New', monospace; font-size: 10px; color: var(--text); white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; max-height: 260px; overflow-y: auto; }
-  .result-success { background: var(--success-bg); border: 1px solid var(--green); border-radius: var(--radius-sm); padding: 12px 16px; font-size: 12px; color: var(--success-text); line-height: 1.5; margin-top: 12px; }
-  .result-warn { background: var(--warn-bg); border: 1px solid #F0C060; border-radius: var(--radius-sm); padding: 12px 16px; font-size: 12px; color: var(--warn-text); line-height: 1.5; margin-top: 12px; }
-  .result-error { background: var(--danger-bg); border: 1px solid #E88; border-radius: var(--radius-sm); padding: 12px 16px; font-size: 12px; color: var(--danger-text); line-height: 1.5; margin-top: 12px; }
-
-  /* HISTORY */
-  .history-wrap { padding: 20px 24px; max-width: 800px; }
-  .order-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 18px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
-  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 600; }
-  .badge-ok { background: var(--success-bg); color: var(--success-text); }
-  .badge-pend { background: var(--warn-bg); color: var(--warn-text); }
-</style>
+    @media (max-width: 1024px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { border-left: none; border-top: 1px solid #ddd; }
+    }
+  </style>
 </head>
 <body>
-
-<!-- LOGIN -->
-<div id="s-login" class="screen on">
-  <div class="login-wrap">
-    <div class="login-logo">
-      <div class="logo">NUU <span>ALIMENTOS</span></div>
+  <div id="loginView" class="login-wrap">
+    <div class="login-card">
+      <h1>NUU <span style="color:#4b8b1e;">ALIMENTOS</span></h1>
       <p>Portal de Pedidos B2B</p>
-    </div>
-    <div class="card">
-      <label>TOKEN TINY ERP</label>
-      <input type="password" id="inp-token" placeholder="Cole seu token aqui">
-      <label>CNPJ DA EMPRESA</label>
-      <input type="text" id="inp-cnpj" placeholder="00.000.000/0000-00">
-      <label>E-MAIL DO RESPONSÁVEL</label>
-      <input type="email" id="inp-email" placeholder="contato@empresa.com.br" style="margin-bottom:18px">
-      <button class="primary-btn" onclick="doLogin()">Acessar catálogo →</button>
-      <p class="hint">Novo cliente? Entre em contato pelo WhatsApp.</p>
-    </div>
-    <div class="note-box">
-      <strong>Como obter seu token TINY:</strong> Acesse o Tiny ERP → Configurações → Token de acesso à API. Cole o token acima para sincronizar produtos e enviar pedidos automaticamente.
-    </div>
-  </div>
-</div>
 
-<!-- CATALOG -->
-<div id="s-catalog" class="screen">
-  <div class="hdr">
-    <div class="logo">NUU <span>ALIMENTOS</span></div>
-    <div class="hdr-right">
-      <span id="lbl-client"></span>
-      <button class="logout-btn" onclick="doLogout()">Sair</button>
+      <label for="token">Token Tiny ERP</label>
+      <input id="token" type="text" placeholder="Cole seu token aqui" />
+
+      <label for="cnpj">CNPJ da empresa</label>
+      <input id="cnpj" type="text" placeholder="00.000.000/0000-00" />
+
+      <label for="email">E-mail do responsável</label>
+      <input id="email" type="email" placeholder="contato@empresa.com.br" />
+
+      <button id="loginBtn" class="btn-primary">Acessar catálogo →</button>
+
+      <div class="helper">
+        <strong>Como obter seu token Tiny:</strong> Acesse o Tiny ERP → Configurações → Token de acesso à API. Cole o token acima para sincronizar produtos e enviar pedidos automaticamente.
+      </div>
+
+      <div id="loginError" class="error"></div>
     </div>
   </div>
-  <div class="tabs" id="cat-tabs"></div>
-  <div class="layout">
-    <div id="pgrid" class="pgrid"></div>
-    <div class="cart-panel">
-      <div class="cart-title">PEDIDO ATUAL</div>
-      <div id="cart-items"></div>
-      <div id="cart-footer"></div>
+
+  <div id="appView" class="app hidden">
+    <header>
+      <div class="brand">NUU <span>ALIMENTOS</span></div>
+      <div class="topbar-right">
+        <span id="cnpjLabel"></span>
+        <button id="logoutBtn" class="btn-outline">Sair</button>
+      </div>
+    </header>
+
+    <div class="tabs">
+      <button class="tab active" data-cat="Todos">Todos</button>
+      <button class="tab" data-cat="Produtos">Produtos</button>
+    </div>
+
+    <div class="layout">
+      <main class="catalog">
+        <div class="toolbar">
+          <input id="searchInput" type="text" placeholder="Buscar produto" />
+        </div>
+        <div id="productsGrid" class="grid"></div>
+      </main>
+
+      <aside class="sidebar">
+        <h3>PEDIDO ATUAL</h3>
+        <div id="cartEmpty" class="cart-empty">Nenhum item adicionado</div>
+        <div id="cartList" class="cart-list"></div>
+        <div id="cartTotal" class="cart-total hidden">Total: R$ 0,00</div>
+      </aside>
     </div>
   </div>
-</div>
 
-<!-- CONFIRM -->
-<div id="s-confirm" class="screen">
-  <div class="confirm-wrap">
-    <button class="back-btn" onclick="go('s-catalog')">← Voltar ao catálogo</button>
-    <div class="section-title">Revisar e confirmar pedido</div>
-    <div class="section-sub" id="conf-sub"></div>
-    <div class="items-list" id="conf-items"></div>
-    <div class="payload-box">
-      <div class="payload-label">PAYLOAD → TINY ERP (api2/pedido.incluir.php)</div>
-      <pre id="conf-payload"></pre>
-    </div>
-    <button id="send-btn" class="order-btn" onclick="sendOrder()">Enviar pedido para o TINY ERP</button>
-    <div id="order-result"></div>
-  </div>
-</div>
+  <script>
+    const PROXY = '/api/tiny';
 
-<!-- HISTORY -->
-<div id="s-history" class="screen">
-  <div class="history-wrap">
-    <button class="back-btn" onclick="go('s-catalog')">← Voltar ao catálogo</button>
-    <div class="section-title" style="margin-bottom:16px">Histórico de pedidos</div>
-    <div id="history-list"></div>
-  </div>
-</div>
+    let token = '';
+    let cnpj = '';
+    let email = '';
+    let activeCat = 'Todos';
+    let products = [];
+    let cart = {};
 
-<script>
-// ─── CONFIG ───────────────────────────────────────────────
-const MIN_ORDER = 300;
-const PROXY = '/api/tiny'; // Vercel serverless function
+    const loginView = document.getElementById('loginView');
+    const appView = document.getElementById('appView');
+    const loginError = document.getElementById('loginError');
+    const productsGrid = document.getElementById('productsGrid');
+    const searchInput = document.getElementById('searchInput');
+    const cnpjLabel = document.getElementById('cnpjLabel');
+    const cartEmpty = document.getElementById('cartEmpty');
+    const cartList = document.getElementById('cartList');
+    const cartTotal = document.getElementById('cartTotal');
 
-// ─── DEMO PRODUCTS (replaced by real TINY data after login) ─
-const DEMO_PRODS = [
-  {id:'NUU-001',name:'Café Torrado e Moído',unit:'Pct 500g',price:18.90,stock:240,min:6,cat:'Café & Bebidas',ic:'☕'},
-  {id:'NUU-002',name:'Café em Grãos Premium',unit:'Pct 1kg',price:45.00,stock:120,min:3,cat:'Café & Bebidas',ic:'🫘'},
-  {id:'NUU-003',name:'Achocolatado em Pó',unit:'Lata 400g',price:12.50,stock:180,min:12,cat:'Café & Bebidas',ic:'🍫'},
-  {id:'NUU-004',name:'Leite em Pó Integral',unit:'Lata 400g',price:15.80,stock:96,min:6,cat:'Lácteos',ic:'🥛'},
-  {id:'NUU-005',name:'Granola Tradicional',unit:'Saco 1kg',price:28.00,stock:60,min:4,cat:'Grãos & Cereais',ic:'🌾'},
-  {id:'NUU-006',name:'Aveia em Flocos',unit:'Saco 500g',price:8.90,stock:200,min:12,cat:'Grãos & Cereais',ic:'🌾'},
-  {id:'NUU-007',name:'Mix de Castanhas',unit:'Saco 200g',price:22.00,stock:48,min:6,cat:'Snacks',ic:'🥜'},
-  {id:'NUU-008',name:'Barra de Cereal Mel',unit:'Cx 24un',price:48.00,stock:36,min:2,cat:'Snacks',ic:'🍬'},
-  {id:'NUU-009',name:'Pasta de Amendoim',unit:'Pote 500g',price:26.00,stock:72,min:4,cat:'Snacks',ic:'🥜'},
-  {id:'NUU-010',name:'Mel Puro Natural',unit:'Pote 500g',price:32.00,stock:30,min:3,cat:'Complementos',ic:'🍯'},
-  {id:'NUU-011',name:'Azeite Extra Virgem',unit:'Garrafa 500ml',price:38.50,stock:54,min:4,cat:'Complementos',ic:'🫒'},
-  {id:'NUU-012',name:'Macarrão Integral',unit:'Emb 500g',price:7.90,stock:300,min:12,cat:'Grãos & Cereais',ic:'🍝'},
-];
-
-// ─── STATE ────────────────────────────────────────────────
-let cart = {}, products = [...DEMO_PRODS];
-let activeCat = 'Todos', token = '', cnpj = '', email = '';
-
-const cats = () => ['Todos', ...new Set(products.map(p => p.cat))];
-const R = n => 'R$ ' + n.toFixed(2).replace('.', ',');
-const getItems = () => Object.entries(cart).map(([id, q]) => {
-  const p = products.find(x => x.id === id);
-  return { ...p, q, sub: p.price * q };
-});
-const getTotal = () => getItems().reduce((s, i) => s + i.sub, 0);
-
-// ─── TINY API CALL ────────────────────────────────────────
-async function tinyCall(endpoint, payload) {
-  const r = await fetch(PROXY, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ endpoint, payload: { token, ...payload } })
-  });
-
-  const text = await r.text();
-
-  try {
-    return JSON.parse(text);
-  } catch (e) {
-    throw new Error(text);
-  }
-}
-
-// ─── LOAD REAL PRODUCTS FROM TINY ────────────────────────
-async function loadProducts() {
-  try {
-   const data = await tinyCall('produtos.pesquisa', { pesquisa: '', situacao: 'A', pagina: 1 });
-    if (data?.retorno?.produtos?.length) {
-      products = data.retorno.produtos.map(p => ({
-        id: p.produto.codigo || p.produto.id,
-        name: p.produto.descricao,
-        unit: p.produto.unidade || 'UN',
-        price: parseFloat(p.produto.preco) || 0,
-        stock: parseInt(p.produto.saldo_fisico_total) || 99,
-        min: 1,
-        cat: p.produto.categoria || 'Produtos',
-        ic: '📦'
-      }));
+    function brl(v) {
+      return Number(v || 0).toLocaleString('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+      });
     }
-  } catch(e) {
-    console.log('Usando produtos demo. Erro TINY:', e.message);
-  }
-}
 
-// ─── SCREENS ─────────────────────────────────────────────
-function go(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('on'));
-  document.getElementById(id).classList.add('on');
-}
-
-// ─── LOGIN ────────────────────────────────────────────────
-async function doLogin() {
-  token = document.getElementById('inp-token').value.trim();
-  cnpj  = document.getElementById('inp-cnpj').value.trim();
-  email = document.getElementById('inp-email').value.trim();
-  if (!cnpj) { alert('Informe o CNPJ'); return; }
-  document.getElementById('lbl-client').textContent = cnpj;
-  if (token) await loadProducts();
-  renderTabs(); renderProds(); renderCart();
-  go('s-catalog');
-}
-
-function doLogout() {
-  token = cnpj = email = ''; cart = {}; products = [...DEMO_PRODS];
-  go('s-login');
-}
-
-// ─── CATALOG ─────────────────────────────────────────────
-function renderTabs() {
-  document.getElementById('cat-tabs').innerHTML = cats().map(c =>
-    `<button class="tab ${c === activeCat ? 'on' : ''}" onclick="setCat('${c}')">${c}</button>`
-  ).join('');
-}
-
-function setCat(c) { activeCat = c; renderTabs(); renderProds(); }
-
-function renderProds() {
-  const list = activeCat === 'Todos' ? products : products.filter(p => p.cat === activeCat);
-  document.getElementById('pgrid').innerHTML = list.map(p => {
-    const q = cart[p.id] || 0;
-    const low = p.stock < 50;
-    return `<div class="pcard">
-      <span class="picn">${p.ic}</span>
-      <div class="pname">${p.name}</div>
-      <div class="punit">${p.unit}</div>
-      <div class="pprice">${R(p.price)}</div>
-      <div class="pmin">mín. ${p.min} unidade${p.min > 1 ? 's' : ''}</div>
-      <div class="${low ? 'pstock-low' : 'pstock-ok'}">${low ? '⚠ Estoque baixo' : '✓ Disponível'}</div>
-      ${q === 0
-        ? `<button class="add-btn" onclick="addItem('${p.id}')">+ Adicionar</button>`
-        : `<div class="qty-ctrl">
-            <button class="qbtn" onclick="chgItem('${p.id}',-1)">−</button>
-            <span class="qnum">${q}</span>
-            <button class="qbtn" onclick="chgItem('${p.id}',1)">+</button>
-           </div>`}
-    </div>`;
-  }).join('');
-}
-
-function addItem(id) {
-  const p = products.find(x => x.id === id);
-  cart[id] = p.min;
-  renderProds(); renderCart();
-}
-
-function chgItem(id, d) {
-  const p = products.find(x => x.id === id);
-  const q = (cart[id] || 0) + d;
-  if (q < p.min) delete cart[id]; else cart[id] = q;
-  renderProds(); renderCart();
-}
-
-// ─── CART ─────────────────────────────────────────────────
-function renderCart() {
-  const items = getItems(), tot = getTotal(), ok = tot >= MIN_ORDER;
-  if (!items.length) {
-    document.getElementById('cart-items').innerHTML = `<div class="cart-empty">Nenhum item adicionado</div>`;
-    document.getElementById('cart-footer').innerHTML = '';
-    return;
-  }
-  document.getElementById('cart-items').innerHTML = items.map(i =>
-    `<div class="cart-item">
-      <div class="ci-name">${i.ic} ${i.name}<br><span class="ci-qty">${i.q}× ${R(i.price)}</span></div>
-      <div class="ci-sub">${R(i.sub)}</div>
-    </div>`
-  ).join('');
-  document.getElementById('cart-footer').innerHTML = `
-    ${!ok ? `<div class="warn-bar">Pedido mínimo ${R(MIN_ORDER)}. Faltam <strong>${R(MIN_ORDER - tot)}</strong>.</div>` : ''}
-    <div class="cart-totals">
-      <div class="tot-row"><span>Subtotal (${items.length} itens)</span><span>${R(tot)}</span></div>
-      <div class="tot-row"><span style="font-size:10px">Frete calculado na entrega</span></div>
-      <div class="tot-big"><span>Total</span><span>${R(tot)}</span></div>
-    </div>
-    <button class="order-btn" ${!ok ? 'disabled' : ''} onclick="goConfirm()">Revisar pedido →</button>`;
-}
-
-// ─── CONFIRM ──────────────────────────────────────────────
-function goConfirm() {
-  const items = getItems(), tot = getTotal();
-  document.getElementById('conf-sub').textContent = `Cliente: ${cnpj}  ·  ${email || 'sem e-mail informado'}`;
-  document.getElementById('conf-items').innerHTML =
-    items.map((i, idx) =>
-      `<div class="row">
-        <span>${i.ic} ${i.name} <span style="color:var(--text2)">${i.unit}</span></span>
-        <span>${i.q}× <strong>${R(i.sub)}</strong></span>
-      </div>`
-    ).join('') +
-    `<div class="row footer-row"><span>Total do pedido</span><span>${R(tot)}</span></div>`;
-
-  const payload = {
-    token: token || 'SEU_TOKEN',
-    formato: 'json',
-    pedido: {
-      data_pedido: new Date().toLocaleDateString('pt-BR'),
-      cliente: { nome: 'Cliente NUU', cnpj, email },
-      itens: items.map(i => ({
-        item: { codigo: i.id, descricao: i.name, unidade: 'UN', quantidade: i.q, valor_unitario: i.price }
-      })),
-      forma_pagamento: 'boleto',
-      observacoes: 'Pedido via Portal B2B NUU Alimentos'
+    function saveSession() {
+      localStorage.setItem('nuu_portal_session', JSON.stringify({ token, cnpj, email }));
     }
-  };
-  document.getElementById('conf-payload').textContent = JSON.stringify(payload, null, 2);
-  document.getElementById('send-btn').disabled = false;
-  document.getElementById('send-btn').textContent = 'Enviar pedido para o TINY ERP';
-  document.getElementById('order-result').innerHTML = '';
-  go('s-confirm');
-}
 
-async function sendOrder() {
-  const btn = document.getElementById('send-btn');
-  btn.disabled = true; btn.textContent = 'Enviando...';
-  const items = getItems(), tot = getTotal();
-
-  if (!token) {
-    document.getElementById('order-result').innerHTML =
-      `<div class="result-warn">
-        <strong>Modo demo ativo</strong> — sem token TINY não é possível enviar o pedido ao ERP.<br>
-        Volte ao login, cole seu token TINY e tente novamente. O JSON acima mostra exatamente o que será enviado.
-      </div>`;
-    btn.disabled = false; btn.textContent = 'Enviar pedido para o TINY ERP';
-    return;
-  }
-
-  try {
-    const data = await tinyCall('pedido.incluir', {
-      pedido: {
-        data_pedido: new Date().toLocaleDateString('pt-BR'),
-        cliente: { cnpj, email },
-        itens: items.map(i => ({
-          item: { codigo: i.id, descricao: i.name, unidade: 'UN', quantidade: i.q, valor_unitario: i.price }
-        })),
-        forma_pagamento: 'boleto',
-        observacoes: 'Pedido via Portal B2B NUU Alimentos'
+    function loadSession() {
+      try {
+        const raw = localStorage.getItem('nuu_portal_session');
+        if (!raw) return false;
+        const data = JSON.parse(raw);
+        token = data.token || '';
+        cnpj = data.cnpj || '';
+        email = data.email || '';
+        return !!token;
+      } catch {
+        return false;
       }
-    });
-    if (data?.retorno?.status === 'OK') {
-      const num = data.retorno.registros?.registro?.numero_pedido || '';
-      document.getElementById('order-result').innerHTML =
-        `<div class="result-success">
-          <strong>Pedido ${num} criado com sucesso no TINY ERP!</strong><br>
-          Estoque atualizado · Financeiro lançado · Pronto para emitir NF-e.
-        </div>`;
-      cart = {}; renderCart();
-    } else {
-      throw new Error(data?.retorno?.erros?.[0]?.erro || 'Erro desconhecido');
     }
-  } catch(e) {
-    document.getElementById('order-result').innerHTML =
-      `<div class="result-error"><strong>Erro ao enviar:</strong> ${e.message}</div>`;
-    btn.disabled = false; btn.textContent = 'Tentar novamente';
-  }
-}
-</script>
+
+    function clearSession() {
+      localStorage.removeItem('nuu_portal_session');
+    }
+
+    async function tinyCall(endpoint, payload) {
+      const r = await fetch(PROXY, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ endpoint, payload: { token, ...payload } })
+      });
+
+      const text = await r.text();
+
+      try {
+        return JSON.parse(text);
+      } catch (e) {
+        throw new Error(text);
+      }
+    }
+
+    function normalizeProducts(data) {
+      const rawList = data?.retorno?.produtos || [];
+
+      return rawList.map((item, i) => {
+        const p = item && item.produto ? item.produto : {};
+
+        return {
+          id: String(p.id || p.codigo || i + 1),
+          name: String((p.nome || 'Produto sem nome')).trim(),
+          price: Number(p.preco || 0),
+          unit: String(p.unidade || 'UN').trim().toUpperCase(),
+          cat: 'Produtos',
+          stock: true,
+          minQty: 1,
+          image: '📦'
+        };
+      });
+    }
+
+    async function loadProducts() {
+      const data = await tinyCall('produtos.pesquisa', {
+        pesquisa: '',
+        situacao: 'A',
+        pagina: 1
+      });
+
+      if (data?.erro) {
+        throw new Error(data.erro);
+      }
+
+      products = normalizeProducts(data);
+      renderProducts();
+    }
+
+    function getFilteredProducts() {
+      const q = searchInput.value.trim().toLowerCase();
+
+      return products.filter(p => {
+        const catOk = activeCat === 'Todos' || p.cat === activeCat || activeCat === 'Produtos';
+        const searchOk = !q || p.name.toLowerCase().includes(q);
+        return catOk && searchOk;
+      });
+    }
+
+    function renderProducts() {
+      const list = getFilteredProducts();
+
+      if (!list.length) {
+        productsGrid.innerHTML = '<div style="color:#666;">Nenhum produto encontrado.</div>';
+        return;
+      }
+
+      productsGrid.innerHTML = list.map(p => `
+        <div class="card">
+          <div>
+            <div class="emoji">${p.image}</div>
+            <div class="title">${escapeHtml(p.name)}</div>
+            <div class="unit">${escapeHtml(p.unit)}</div>
+            <div class="price">${brl(p.price)}</div>
+            <div class="minqty">mín. ${p.minQty} unidade</div>
+            <div class="stock ok">✓ Disponível</div>
+          </div>
+          <button class="btn-outline" onclick="addToCart('${String(p.id).replace(/'/g, "\\'")}')">+ Adicionar</button>
+        </div>
+      `).join('');
+    }
+
+    function getProductById(id) {
+      return products.find(p => String(p.id) === String(id));
+    }
+
+    function addToCart(id) {
+      const p = getProductById(id);
+      if (!p) return;
+      if (!cart[id]) cart[id] = 0;
+      cart[id] += 1;
+      renderCart();
+    }
+
+    function changeQty(id, delta) {
+      if (!cart[id]) return;
+      cart[id] += delta;
+      if (cart[id] <= 0) delete cart[id];
+      renderCart();
+    }
+
+    function renderCart() {
+      const ids = Object.keys(cart);
+
+      if (!ids.length) {
+        cartEmpty.classList.remove('hidden');
+        cartList.innerHTML = '';
+        cartTotal.classList.add('hidden');
+        cartTotal.textContent = 'Total: R$ 0,00';
+        return;
+      }
+
+      cartEmpty.classList.add('hidden');
+
+      let total = 0;
+
+      cartList.innerHTML = ids.map(id => {
+        const p = getProductById(id);
+        if (!p) return '';
+        const qty = cart[id];
+        const sub = p.price * qty;
+        total += sub;
+
+        return `
+          <div class="cart-item">
+            <div class="cart-item-title">${escapeHtml(p.name)}</div>
+            <div>${brl(p.price)} · ${escapeHtml(p.unit)}</div>
+            <div class="cart-controls">
+              <button class="small-btn" onclick="changeQty('${String(id).replace(/'/g, "\\'")}', -1)">−</button>
+              <div class="qty">${qty}</div>
+              <button class="small-btn" onclick="changeQty('${String(id).replace(/'/g, "\\'")}', 1)">+</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      cartTotal.classList.remove('hidden');
+      cartTotal.textContent = 'Total: ' + brl(total);
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    async function doLogin() {
+      loginError.textContent = '';
+
+      token = document.getElementById('token').value.trim();
+      cnpj = document.getElementById('cnpj').value.trim();
+      email = document.getElementById('email').value.trim();
+
+      if (!token) {
+        loginError.textContent = 'Cole o token do Tiny.';
+        return;
+      }
+
+      try {
+        await loadProducts();
+        saveSession();
+        cnpjLabel.textContent = cnpj;
+        loginView.classList.add('hidden');
+        appView.classList.remove('hidden');
+      } catch (err) {
+        loginError.textContent = 'Erro ao carregar catálogo:\n' + (err?.message || err);
+      }
+    }
+
+    function logout() {
+      clearSession();
+      token = '';
+      cnpj = '';
+      email = '';
+      products = [];
+      cart = {};
+      document.getElementById('token').value = '';
+      document.getElementById('cnpj').value = '';
+      document.getElementById('email').value = '';
+      appView.classList.add('hidden');
+      loginView.classList.remove('hidden');
+      renderCart();
+    }
+
+    document.getElementById('loginBtn').addEventListener('click', doLogin);
+    document.getElementById('logoutBtn').addEventListener('click', logout);
+    searchInput.addEventListener('input', renderProducts);
+
+    document.querySelectorAll('.tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeCat = btn.dataset.cat || 'Todos';
+        renderProducts();
+      });
+    });
+
+    window.addToCart = addToCart;
+    window.changeQty = changeQty;
+
+    if (loadSession()) {
+      document.getElementById('token').value = token;
+      document.getElementById('cnpj').value = cnpj;
+      document.getElementById('email').value = email;
+      cnpjLabel.textContent = cnpj;
+      loadProducts()
+        .then(() => {
+          loginView.classList.add('hidden');
+          appView.classList.remove('hidden');
+        })
+        .catch(() => {
+          clearSession();
+        });
+    }
+  </script>
 </body>
 </html>
